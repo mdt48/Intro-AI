@@ -1,4 +1,4 @@
-import operator
+import math
 def dijkstra(adj_list, S, E, node_to_block):
     # all nodes unvisited
     Q = {i for i in range(0, 100)}
@@ -46,6 +46,80 @@ def dijkstra(adj_list, S, E, node_to_block):
     print("Nodes Visited: ", sp)
     print("Path:", seq)
     print("Length: {}".format(dist[E]))
+
+
+def l1(s, e):
+    # Manhattan distance
+
+    start_row = s // 10
+    end_row = e // 10
+
+    start_col = s % 10
+    end_col = e % 10
+
+    return abs(start_row - end_row) + abs(start_col - end_col)
+    
+
+def l2(s, e):
+    # Euclidean distance
+
+    start_row = s / 10
+    end_row = e / 10
+
+    start_col = s % 10
+    end_col = e % 10
+
+    return math.sqrt ( ((start_row-end_row)**2) - ((start_row - end_row)**2) )
+
+def a_star(adj_list, S, E, heuristic):
+    # path to extend
+    # f(n) = g(n) + h(n)
+    # g(n)  path from start to n
+    # h(n) = heuristic
+    # dist[n] = g(n)
+    # f_distance = f(n)
+
+    op =  [S]
+    prev = {i for i in range(0, 100)}
+
+    f = {i:float('inf') for i in range(0,100)}
+    f[S] = 0
+
+    g = {i:float('inf') for i in range(0,100)}
+    g[S] = 0
+    
+    h = {}
+    
+    while op:
+        curr = min(f, key=f.get)
+
+        if curr == E:
+            break
+
+        op.remove(curr)
+
+        for edge in adj_list[curr]:
+            t = g[curr] + edge[1]
+
+            if t < g[curr]:
+                prev[edge[0]] = curr
+                g[edge[0]] = t
+                f[edge[0]] = g[edge[0]] + heuristic(edge[0])
+
+                if edge[0] not in op:
+                    op.append(edge[0])
+
+
+
+
+    # printing
+    path = []
+    u = E
+    while u != None:
+        path.insert(0)
+        u = prev[u]
+    
+
             
 file = "./p1_graph.txt"
 section = 0 # 0: nodes, 1: edges, 2: SE
@@ -80,4 +154,5 @@ with open(file, "r") as graph:
                 E = int(data[1])
 
 
-dijkstra(adj_list, S, E, node_to_block)
+# dijkstra(adj_list, S, E, node_to_block)
+a_star(adj_list, S, E, l1)
