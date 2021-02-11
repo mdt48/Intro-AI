@@ -1,5 +1,17 @@
 import math
+from os import fsdecode
+
+def find_min(d, check):
+    u = max(d, key=d.get); m = d[u]
+    for k in d.keys():
+        if d[k] < m and k not in check:
+            m = d[k]
+            u = k
+    return u
+
 def dijkstra(adj_list, S, E, node_to_block):
+    print("Dijstra's\n---------")
+    n_iters = 0
     # all nodes unvisited
     Q = {i for i in range(0, 100)}
 
@@ -18,13 +30,9 @@ def dijkstra(adj_list, S, E, node_to_block):
     dist[S] = 0
 
     while Q:
-        u = max(dist, key=dist.get); m = dist[u]
-        for k in dist.keys():
-            if dist[k] < m and k not in sp:
-                m = dist[k]
-                u = k
+        n_iters += 1
+        u = find_min(dist, sp)
 
-        print(sp)
         sp.append(u)
         Q.remove(u)
 
@@ -44,9 +52,11 @@ def dijkstra(adj_list, S, E, node_to_block):
             seq.insert(0, u)
             u = prev[u]
     print("Nodes Visited: ", sp)
+    print("N_iters={}".format(n_iters))
+
     print("Path:", seq)
     print("Length: {}".format(dist[E]))
-
+    print("\n----------\n")
 
 def l1(s, e):
     # Manhattan distance
@@ -72,42 +82,48 @@ def l2(s, e):
     return math.sqrt ( ((start_row-end_row)**2) - ((start_row - end_row)**2) )
 
 def a_star(adj_list, S, E, heuristic):
+    print("A*\n---------")
     # path to extend
     # f(n) = g(n) + h(n)
     # g(n)  path from start to n
     # h(n) = heuristic
     # dist[n] = g(n)
-    # f_distance = f(n)
+    
+    open_list = [S]
+    closed_list = []
 
-    op =  [S]
-    prev = {i for i in range(0, 100)}
+    prev = {}
 
-    f = {i:float('inf') for i in range(0,100)}
-    f[S] = 0
-
-    g = {i:float('inf') for i in range(0,100)}
+    f, g = {i:float('inf') for i in range(0, len(adj_list.keys()))}, {i:float('inf') for i in range(0, len(adj_list.keys()))}
+    f[S] = heuristic(S, E)
     g[S] = 0
-    
-    h = {}
-    
-    while op:
-        curr = min(f, key=f.get)
 
-        if curr == E:
+    n_iters = 0
+    while open_list:
+        n_iters += 1
+
+        u = max(f, key=f.get); m = f[u]
+        for k in f.keys():
+            if f[k] < m and k in open_list:
+                m = f[k]
+                u = k
+
+        open_list.remove(u)
+        closed_list.append(u)
+        # if end node is found
+        if u == E:
+            # g = distance to u + distance u->successor
+            print('found path')
             break
 
-        op.remove(curr)
-
-        for edge in adj_list[curr]:
-            t = g[curr] + edge[1]
-
-            if t < g[curr]:
-                prev[edge[0]] = curr
-                g[edge[0]] = t
-                f[edge[0]] = g[edge[0]] + heuristic(edge[0])
-
-                if edge[0] not in op:
-                    op.append(edge[0])
+        for successor in adj_list[u]:
+            tentative = g[u] + successor[1]
+            if tentative < g[successor[0]]:
+                prev[successor[0]] = u
+                g[successor[0]] = tentative
+                f[successor[0]] = g[successor[0]] + heuristic(successor[0], E)
+                if successor not in open_list:
+                    open_list.append(successor[0])
 
 
 
@@ -116,8 +132,16 @@ def a_star(adj_list, S, E, heuristic):
     path = []
     u = E
     while u != None:
-        path.insert(0)
-        u = prev[u]
+        path.insert(0,u)
+        try:
+            u = prev[u]
+        except:
+            break
+    print("Nodes Visited: ", closed_list)
+    print("N_iters={}".format(n_iters))
+
+    print("Path:", path)
+    print("Length: {}\n\n".format(f[E]))
     
 
             
@@ -154,5 +178,6 @@ with open(file, "r") as graph:
                 E = int(data[1])
 
 
-# dijkstra(adj_list, S, E, node_to_block)
+dijkstra(adj_list, S, E, node_to_block)
 a_star(adj_list, S, E, l1)
+a_star(adj_list, S, E, l2)
