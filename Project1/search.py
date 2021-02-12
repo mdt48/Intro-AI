@@ -1,5 +1,5 @@
 import math
-from os import fsdecode
+import heapq
 
 def find_min(d, check):
     u = max(d, key=d.get); m = d[u]
@@ -17,7 +17,7 @@ def dijkstra(adj_list, S, E, node_to_block):
 
     #visited list
     sp = []
-
+    
     # distance and prev dicts
     dist = {}
     prev = {}
@@ -51,7 +51,8 @@ def dijkstra(adj_list, S, E, node_to_block):
         while u != None:
             seq.insert(0, u)
             u = prev[u]
-    print("Nodes Visited: ", sp)
+
+    print("Nodes Visited: ", len(sp))
     print("N_iters={}".format(n_iters))
 
     print("Path:", seq)
@@ -87,61 +88,54 @@ def a_star(adj_list, S, E, heuristic):
     # f(n) = g(n) + h(n)
     # g(n)  path from start to n
     # h(n) = heuristic
-    # dist[n] = g(n)
-    
-    open_list = [S]
-    closed_list = []
 
     prev = {}
 
+    heap = []
+    closed = set()
+
     f, g = {i:float('inf') for i in range(0, len(adj_list.keys()))}, {i:float('inf') for i in range(0, len(adj_list.keys()))}
-    f[S] = heuristic(S, E)
+    f[S] = heuristic(node_to_block[S], node_to_block[E])
     g[S] = 0
 
+    heap.append((f[S], S))
+    heapq.heapify(heap)    
+
     n_iters = 0
-    while open_list:
+    while not heap.count == 0:
         n_iters += 1
+        _, u = heapq.heappop(heap)
+        heapq.heappush(heap, (_, u))
 
-        u = max(f, key=f.get); m = f[u]
-        for k in f.keys():
-            if f[k] < m and k in open_list:
-                m = f[k]
-                u = k
-
-        open_list.remove(u)
-        closed_list.append(u)
-        # if end node is found
         if u == E:
-            # g = distance to u + distance u->successor
-            print('found path')
             break
+        closed.add(u)
 
         for successor in adj_list[u]:
             tentative = g[u] + successor[1]
-            if tentative < g[successor[0]]:
+            if (tentative + heuristic(node_to_block[successor[0]], node_to_block[E])) < f[successor[0]] and successor[0] not in closed:
                 prev[successor[0]] = u
                 g[successor[0]] = tentative
-                f[successor[0]] = g[successor[0]] + heuristic(successor[0], E)
-                if successor not in open_list:
-                    open_list.append(successor[0])
-
-
+                f[successor[0]] = g[successor[0]] + heuristic(node_to_block[successor[0]], node_to_block[E])
+                if successor not in heap:
+                    heapq.heappush(heap, (f[successor[0]], successor[0]))
+                    
+        heapq.heappop(heap)
 
 
     # printing
     path = []
     u = E
-    while u != None:
+    while u != S:
         path.insert(0,u)
-        try:
-            u = prev[u]
-        except:
-            break
-    print("Nodes Visited: ", closed_list)
+        u = prev[u]
+    path.insert(0, S)    
+    print("Nodes Visited: ", len(closed))
     print("N_iters={}".format(n_iters))
 
     print("Path:", path)
     print("Length: {}\n\n".format(f[E]))
+
     
 
             
@@ -179,5 +173,4 @@ with open(file, "r") as graph:
 
 
 dijkstra(adj_list, S, E, node_to_block)
-a_star(adj_list, S, E, l1)
 a_star(adj_list, S, E, l2)
