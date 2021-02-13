@@ -12,17 +12,20 @@ def find_min(d, check):
 def dijkstra(adj_list, S, E, node_to_block):
     print("Dijstra's\n---------")
     n_iters = 0
+
     # all nodes unvisited
     Q = {i for i in range(0, 100)}
 
     #visited list
-    sp = []
+    visited = []
     
     # distance and prev dicts
     dist = {}
     prev = {}
 
-    u = None
+    
+
+    current = None
     for vertex in adj_list.keys():
         dist[vertex] = float('inf')
         prev[vertex] = None
@@ -31,28 +34,29 @@ def dijkstra(adj_list, S, E, node_to_block):
 
     while Q:
         n_iters += 1
-        u = find_min(dist, sp)
+        current = find_min(dist, visited)
+        # current = heapq.heappop(queue)
 
-        sp.append(u)
-        Q.remove(u)
+        visited.append(current)
+        Q.remove(current)
 
-        if u == E:
+        if current == E:
             break
 
-        for edge in adj_list[u]:
-            alt = dist[u] + edge[1]
+        for edge in adj_list[current]:
+            alt = dist[current] + edge[1]
             if alt < dist[edge[0]]:
                 dist[edge[0]] = alt
-                prev[edge[0]] = u
+                prev[edge[0]] = current
     
     # print the shortest path
     seq = []
-    if prev[u] != None or u == S:
-        while u != None:
-            seq.insert(0, u)
-            u = prev[u]
+    if prev[current] != None or current == S:
+        while current != None:
+            seq.insert(0, current)
+            current = prev[current]
 
-    print("Nodes Visited: ", len(sp))
+    print("Nodes Visited: ", len(visited))
     print("N_iters={}".format(n_iters))
 
     print("Path:", seq)
@@ -80,7 +84,8 @@ def l2(s, e):
     start_col = s % 10
     end_col = e % 10
 
-    return math.sqrt ( ((start_row-end_row)**2) - ((start_row - end_row)**2) )
+    return math.sqrt( ((start_row-end_row)**2) + ((start_col-end_col)**2) )
+
 
 def a_star(adj_list, S, E, heuristic):
     print("A*\n---------")
@@ -89,40 +94,75 @@ def a_star(adj_list, S, E, heuristic):
     # g(n)  path from start to n
     # h(n) = heuristic
 
+    # the previous node for each node, used to rebuild path
     prev = {}
 
+    # prio queue/heap queue
     heap = []
-    closed = set()
 
-    f, g = {i:float('inf') for i in range(0, len(adj_list.keys()))}, {i:float('inf') for i in range(0, len(adj_list.keys()))}
+    # already explored nodes
+    closed = []
+
+    # initialize the initial f,g,h vals for each node
+    f, g, h= {i:float('inf') for i in range(0, len(adj_list.keys()))}, {i:float('inf') for i in range(0, len(adj_list.keys()))},{i:0 for i in range(0, len(adj_list.keys()))}
     f[S] = heuristic(node_to_block[S], node_to_block[E])
     g[S] = 0
 
+    # use f[S] as key
     heap.append((f[S], S))
     heapq.heapify(heap)    
 
     n_iters = 0
     while not heap.count == 0:
         n_iters += 1
-        _, u = heapq.heappop(heap)
-        heapq.heappush(heap, (_, u))
+        
+        # extract the minimum 
+        _, current = heapq.heappop(heap)
+        closed.append(current)
 
-        if u == E:
+
+        # if we have found the target node
+        if current == E:
             break
-        closed.add(u)
+        
+        # iterate over children of current
+        for child in adj_list[current]:
+            # see if the tentative(new) score is better than what was already computed
+            # if it is, update the values, and add to queue
+            tentative = g[current] + child[1] 
+            test = heuristic(node_to_block[child[0]], node_to_block[E])
+            if tentative + test < g[child[0]]:
+                # set g and compute h for child
+                g[child[0]] = tentative
+                h[child[0]] = heuristic(node_to_block[child[0]], node_to_block[E])
 
-        for successor in adj_list[u]:
-            tentative = g[u] + successor[1]
-            if (tentative + heuristic(node_to_block[successor[0]], node_to_block[E])) < f[successor[0]] and successor[0] not in closed:
-                prev[successor[0]] = u
-                g[successor[0]] = tentative
-                f[successor[0]] = g[successor[0]] + heuristic(node_to_block[successor[0]], node_to_block[E])
-                if successor not in heap:
-                    heapq.heappush(heap, (f[successor[0]], successor[0]))
-                    
-        heapq.heappop(heap)
+                # previous is the current node
+                prev[child[0]] = current
 
+                # dont add to queue if its already explored
+                if child[0] in closed: continue
 
+                # compute new f
+                f[child[0]] = g[child[0]] + h[child[0]]
+
+                # update values in queue already
+                fl = False
+                for he in heap:
+                    if he[1] == child[0]:
+                        heap.remove(he)
+                        heapq.heappush(heap, (f[he[1]], he[1]))
+                        prev[he[1]] = current
+                        fl = True
+                
+                # dont add it to queue if you just updated it
+                if fl: continue
+
+                heapq.heappush(heap, (f[child[0]], child[0]))
+            
+            
+
+            
+            
     # printing
     path = []
     u = E
@@ -173,4 +213,4 @@ with open(file, "r") as graph:
 
 
 dijkstra(adj_list, S, E, node_to_block)
-a_star(adj_list, S, E, l2)
+a_star(adj_list, S, E, l1)
