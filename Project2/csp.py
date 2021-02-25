@@ -31,7 +31,7 @@ def csp(G, node, end, colors):
         if G[node].is_safe(color):
             G[node].color = color
             
-            if G[node+1] == G[end]:
+            if G[node] == G[end]:
                 return True
                 
             if csp(G, node+1, end, colors):
