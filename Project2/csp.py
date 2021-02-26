@@ -1,16 +1,33 @@
 
 import sys, os
+
+##
 class Node:
+    """
+    Node holds all of the relevant information fora node, including
+    the list of all neighbors (adjacent nodes), the current color of the
+    node(0 if unassigned), and a list of available colors for the Node 
+    to be assigned to. This is done for the purposes of constrain 
+    propagation
+    """
+
     def __init__(self) -> None:
+        """Set initial values of the node"""
         self.neighbors = []
         self.color = 0
         self.avail_colors = []
 
     def add_neighbor(self, node):
+        """Add a node the the adjacent list""" 
         self.neighbors.append(node)
 
 
 def add_nodes_edges(nodes, edges, colors):
+    """
+    Create the graph, creating all nodes, and adding all edges
+    to the nodes
+    """
+
     graph = {}
     for node in nodes:
         graph[node] = Node()
@@ -27,14 +44,23 @@ def add_nodes_edges(nodes, edges, colors):
 
 
 def dfs_coloring(G, start, colors):
+    """
+    Explore the graph in a DFS manner, adding a color to a node, and
+    then removing a color and backtracking if a coloring is invalid
+    """
+    # find a free color for the current node
     adj_colors = [G[i].color for i in G[start].neighbors]
     for c in colors:
         if c not in adj_colors:
             G[start].color = c
             break
+    # the the only color is the unavailable color, then we dont have
+    # a valid coloring
     if G[start].color == 0:
         return False
     
+    # check each neighbor
+    # Note, we have least constraining var by sorting the list of neighbors
     for neighbor in G[start].neighbors:
         if G[neighbor].color == 0:
             # remove the value to be arc consistent leads to fewer sub calls
@@ -47,6 +73,7 @@ def dfs_coloring(G, start, colors):
     return True
 
 def file_io(file):
+    """Read in data from file of given format"""
     colors = None
     nodes = set()
     edges = set()
