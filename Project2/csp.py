@@ -36,13 +36,7 @@ def dfs_coloring(G, start, colors):
             if not dfs_coloring(G, neighbor, colors):
                 return False
     return True
-
-def verify(G):
-    for node in G:
-        if G[node].color == 0:
-            return False
-    return True
-
+    
 def main():
     colors = None
     nodes = set()
