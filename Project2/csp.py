@@ -1,19 +1,11 @@
-from collections import defaultdict
-
-
 class Node:
     def __init__(self) -> None:
-        self.neighbors = set()
+        self.neighbors = []
         self.color = 0
 
     def add_neighbor(self, node):
-        self.neighbors.add(node)
+        self.neighbors.append(node)
 
-    def is_safe(self, color):
-        for n in self.neighbors:
-            if n.color == color:
-                return False
-        return True
 
 def add_edges(nodes, edges):
     node_map = {}
@@ -21,26 +13,35 @@ def add_edges(nodes, edges):
         node_map[node] = Node()
 
     for edge in edges:
-        node_map[edge[1]].add_neighbor(node_map[edge[0]])  # add start node to pred of end node
-        node_map[edge[0]].add_neighbor(node_map[edge[1]])  # add end node to succ of start node
+        node_map[edge[1]].add_neighbor(edge[0])  # add start node to pred of end node
+        node_map[edge[0]].add_neighbor(edge[1])  # add end node to succ of start node
 
+    for node in nodes:
+        node_map[node].neighbors.sort(key=lambda x: len(node_map[x].neighbors))
     return node_map
 
-def csp(G, node, end, colors):
-    for color in range(1, colors+1):
-        if G[node].is_safe(color):
-            G[node].color = color
-            
-            if G[node] == G[end]:
-                return True
-                
-            if csp(G, node+1, end, colors):
-                return True
-            G[node].color = 0
 
-    return False
+def dfs_coloring(G, start, colors):
+    # G[start].visited = True
+    adj_colors = [G[i].color for i in G[start].neighbors]
+    for c in colors:
+        if c not in adj_colors:
+            G[start].color = c
+            break
+    if G[start].color == 0:
+        return False
+    
+    for neighbor in G[start].neighbors:
+        if G[neighbor].color == 0:
+            if not dfs_coloring(G, neighbor, colors):
+                return False
+    return True
 
-
+def verify(G):
+    for node in G:
+        if G[node].color == 0:
+            return False
+    return True
 
 def main():
     colors = None
@@ -65,10 +66,11 @@ def main():
                 edges.add(tuple(e))
 
     G = add_edges(nodes, edges)
-    if csp(G, min(G.keys()), max(G.keys()), colors):
+
+    # dfs_coloring(G, min(G.keys()), list(range(1, colors+1)))
+    if dfs_coloring(G, min(G.keys()), list(range(1, colors+1))):
         print("There is a {} coloring".format(colors))
     else:
         print("There is not a {} coloring".format(colors))
-
 if __name__ == "__main__":
     main()

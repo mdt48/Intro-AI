@@ -1,0 +1,13 @@
+def csp(G, node, end, colors):
+    for color in range(1, colors+1):
+        if G[node].is_safe(color):
+            G[node].color = color
+            
+            if G[node] == G[end]:
+                return True
+                
+            if csp(G, node+1, end, colors):
+                return True
+            G[node].color = 0
+
+    return False
