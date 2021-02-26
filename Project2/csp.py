@@ -4,24 +4,26 @@ class Node:
     def __init__(self) -> None:
         self.neighbors = []
         self.color = 0
+        self.avail_colors = []
 
     def add_neighbor(self, node):
         self.neighbors.append(node)
 
 
-def add_nodes_edges(nodes, edges):
-    node_map = {}
+def add_nodes_edges(nodes, edges, colors):
+    graph = {}
     for node in nodes:
-        node_map[node] = Node()
+        graph[node] = Node()
+        graph[node].avail_colors = list(range(1, colors+1))
 
     for edge in edges:
-        node_map[edge[1]].add_neighbor(edge[0])  # add start node to pred of end node
-        node_map[edge[0]].add_neighbor(edge[1])  # add end node to succ of start node
+        graph[edge[1]].add_neighbor(edge[0])  
+        graph[edge[0]].add_neighbor(edge[1])  
 
     # sort by number of neighbors! the satisfies the least constraining variable heuristic
     for node in nodes:
-        node_map[node].neighbors.sort(key=lambda x: len(node_map[x].neighbors))
-    return node_map
+        graph[node].neighbors.sort(key=lambda x: len(graph[x].neighbors))
+    return graph
 
 
 def dfs_coloring(G, start, colors):
@@ -35,7 +37,12 @@ def dfs_coloring(G, start, colors):
     
     for neighbor in G[start].neighbors:
         if G[neighbor].color == 0:
+            # remove the value to be arc consistent leads to fewer sub calls
+            G[neighbor].avail_colors.remove(c)
             if not dfs_coloring(G, neighbor, colors):
+                # add color back in if the c color for node start fails
+                # this is because the child node can now be colored c
+                G[neighbor].avail_colors.append(c)
                 return False
     return True
 
@@ -63,9 +70,8 @@ def file_io(file):
     return nodes, edges, colors
 
 def main(inp):
-    print(inp)
-    nodes, edges, colors = file_io("data/test1.txt")
-    G = add_nodes_edges(nodes, edges)
+    nodes, edges, colors = file_io(inp)
+    G = add_nodes_edges(nodes, edges, colors)
 
     if dfs_coloring(G, min(G.keys()), list(range(1, colors+1))):
         print("There is a {} coloring".format(colors))
