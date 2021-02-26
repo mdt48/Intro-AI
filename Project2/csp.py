@@ -1,3 +1,5 @@
+
+import sys, os
 class Node:
     def __init__(self) -> None:
         self.neighbors = []
@@ -7,7 +9,7 @@ class Node:
         self.neighbors.append(node)
 
 
-def add_edges(nodes, edges):
+def add_nodes_edges(nodes, edges):
     node_map = {}
     for node in nodes:
         node_map[node] = Node()
@@ -16,13 +18,13 @@ def add_edges(nodes, edges):
         node_map[edge[1]].add_neighbor(edge[0])  # add start node to pred of end node
         node_map[edge[0]].add_neighbor(edge[1])  # add end node to succ of start node
 
+    # sort by number of neighbors! the satisfies the least constraining variable heuristic
     for node in nodes:
         node_map[node].neighbors.sort(key=lambda x: len(node_map[x].neighbors))
     return node_map
 
 
 def dfs_coloring(G, start, colors):
-    # G[start].visited = True
     adj_colors = [G[i].color for i in G[start].neighbors]
     for c in colors:
         if c not in adj_colors:
@@ -36,12 +38,12 @@ def dfs_coloring(G, start, colors):
             if not dfs_coloring(G, neighbor, colors):
                 return False
     return True
-    
-def main():
+
+def file_io(file):
     colors = None
     nodes = set()
     edges = set()
-    with open("data/test1.txt", "r") as txt_file:
+    with open(file, "r") as txt_file:
         section = 0
         for idx,line in enumerate(txt_file):
             if idx == 0: continue
@@ -58,13 +60,22 @@ def main():
                 nodes.add(e[0])
                 nodes.add(e[1])
                 edges.add(tuple(e))
+    return nodes, edges, colors
 
-    G = add_edges(nodes, edges)
+def main(inp):
+    print(inp)
+    nodes, edges, colors = file_io("data/test1.txt")
+    G = add_nodes_edges(nodes, edges)
 
-    # dfs_coloring(G, min(G.keys()), list(range(1, colors+1)))
     if dfs_coloring(G, min(G.keys()), list(range(1, colors+1))):
         print("There is a {} coloring".format(colors))
     else:
         print("There is not a {} coloring".format(colors))
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("please enter an input file")
+    else:
+        if not os.path.isfile(sys.argv[1]):
+            print("please enter a valid file")
+        else: main(sys.argv[1])
